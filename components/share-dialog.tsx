@@ -95,7 +95,7 @@ export function ShareDialog({ open, onClose, catId, catName }: ShareDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="w-[95vw] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{catName}の記録を共有</DialogTitle>
           <DialogDescription>このURLを知っている人は誰でも体重記録を閲覧できます</DialogDescription>
@@ -118,8 +118,8 @@ export function ShareDialog({ open, onClose, catId, catName }: ShareDialogProps)
                 </div>
               </div>
 
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">
+              <div className="bg-muted p-3 sm:p-4 rounded-lg">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   <strong>注意:</strong> このURLを知っている人は誰でも{catName}の体重記録を見ることができます。
                   ただし、新しい記録を追加することはできません。
                 </p>

@@ -73,7 +73,7 @@ export default function DashboardPage() {
         const data = doc.data() as CatData
         const isCollaborator = data.collaborators?.some((c) => c.userId === user.uid || c.email === user.email)
         if (isCollaborator && !catsData.find((cat) => cat.id === doc.id)) {
-          catsData.push({ id: doc.id, ...data } as CatData)
+            catsData.push({ ...doc.data(), id: doc.id } as CatData)
         }
       })
 
@@ -114,28 +114,37 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 md:py-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3 md:gap-4">
+        <div className="container mx-auto px-3 sm:px-4 py-4">
+          <div className="flex flex-row justify-between items-center gap-2 sm:gap-3">
             <Link href="/" className="flex items-center gap-2 md:gap-3">
-              <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg">
-                <Cat className="w-4 sm:w-5 md:w-6 md:h-6 text-primary" />
+              <div className="p-1.5 bg-primary/10 rounded-lg">
+                <Cat className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-base sm:text-lg md:text-xl font-bold">猫の体重記録</span>
+              <span className="text-base sm:text-lg font-bold">猫の体重記録</span>
             </Link>
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-2">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-medium">{user.displayName}</p>
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/settings">
-                  <Settings className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-                  <span className="hidden sm:inline">設定</span>
+              <Button variant="outline" size="icon" asChild className="sm:hidden w-9 h-9">
+                <Link href="/settings" aria-label="設定">
+                  <Settings className="w-4 h-4" />
                 </Link>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowLogoutDialog(true)}>
-                <LogOut className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-                <span className="hidden sm:inline">ログアウト</span>
+              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+                <Link href="/settings">
+                  <Settings className="w-4 h-4 mr-2" />
+                  <span>設定</span>
+                </Link>
+              </Button>
+
+              <Button variant="outline" size="icon" onClick={() => setShowLogoutDialog(true)} className="sm:hidden w-9 h-9">
+                <LogOut className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowLogoutDialog(true)} className="hidden sm:inline-flex">
+                <LogOut className="w-4 h-4 mr-2" />
+                <span>ログアウト</span>
               </Button>
             </div>
           </div>
@@ -149,9 +158,9 @@ export default function DashboardPage() {
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">ダッシュボード</h1>
               <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">登録している猫ちゃんの一覧</p>
             </div>
-            <Button size="sm" className="md:size-lg w-full sm:w-auto" onClick={() => setShowAddDialog(true)}>
-              <Plus className="w-3 sm:w-4 h-3 sm:h-4 md:w-5 md:h-5 sm:mr-1 md:mr-2" />
-              <span className="text-xs sm:text-sm">猫を追加</span>
+            <Button size="lg" className="w-full sm:w-auto" onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              <span>猫を追加</span>
             </Button>
           </div>
 
@@ -194,7 +203,7 @@ export default function DashboardPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
-                      <Button variant="outline" className="w-full bg-transparent text-xs sm:text-sm md:text-base">
+                      <Button variant="outline" className="w-full bg-secondary/50 text-xs sm:text-sm md:text-base">
                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">体重記録を見る</span>
                         <span className="sm:hidden">記録を見る</span>

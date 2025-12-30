@@ -26,7 +26,7 @@ export function WeightChart({ weights, targetWeight }: WeightChartProps) {
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="min-w-[300px]">
+      <div className="min-w-[700px]">
         <ResponsiveContainer width="100%" height={350}>
           <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 70 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />

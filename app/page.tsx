@@ -5,12 +5,64 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Cat, Scale, TrendingUp, Share2, AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CatLoader } from "@/components/cat-loader"
+import { collection, query, where, getDocs, type Timestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { RegisteredCatsBlock } from "@/components/registered-cats-block"
+
+interface CatData {
+  id: string
+  name: string
+  breed?: string
+  imageUrl?: string
+  ownerId: string
+  collaborators?: { userId: string; email: string }[]
+  createdAt: Timestamp
+}
 
 export default function HomePage() {
   const { user, loading, signInWithGoogle } = useAuth()
   const [authError, setAuthError] = useState<string | null>(null)
+  const [cats, setCats] = useState<CatData[]>([])
+  const [loadingCats, setLoadingCats] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      loadCats()
+    }
+  }, [user])
+
+  const loadCats = async () => {
+    if (!user) return
+
+    setLoadingCats(true)
+    try {
+      const catsRef = collection(db, "cats")
+      const ownerQuery = query(catsRef, where("ownerId", "==", user.uid))
+      const ownerSnapshot = await getDocs(ownerQuery)
+
+      const catsData: CatData[] = []
+      ownerSnapshot.forEach((doc) => {
+        catsData.push({ id: doc.id, ...doc.data() } as CatData)
+      })
+
+      const allCatsSnapshot = await getDocs(catsRef)
+      allCatsSnapshot.forEach((doc) => {
+        const data = doc.data() as CatData
+        const isCollaborator = data.collaborators?.some((c) => c.userId === user.uid || c.email === user.email)
+        if (isCollaborator && !catsData.find((cat) => cat.id === doc.id)) {
+          catsData.push({ id: doc.id, ...data } as CatData)
+        }
+      })
+
+      setCats(catsData)
+    } catch (error) {
+      console.error("Error loading cats:", error)
+    } finally {
+      setLoadingCats(false)
+    }
+  }
 
   const handleSignIn = async () => {
     try {
@@ -130,12 +182,12 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Cat className="w-8 h-8 text-primary" />
+                <Cat className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold">猫の体重記録</h1>
+                <h1 className="text-2xl font-bold">猫の体重記録</h1>
                 <p className="text-muted-foreground">ようこそ、{user.displayName}さん</p>
               </div>
             </div>
@@ -144,20 +196,28 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>はじめに</CardTitle>
-              <CardDescription>猫ちゃんの体重記録を開始しましょう</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                ダッシュボードから新しい猫を追加して、体重の記録を始めることができます。
-              </p>
-              <Link href="/dashboard">
-                <Button>今すぐ始める</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {loadingCats ? (
+            <div className="flex justify-center py-10">
+              <CatLoader />
+            </div>
+          ) : cats.length > 0 ? (
+            <RegisteredCatsBlock cats={cats} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>はじめに</CardTitle>
+                <CardDescription>猫ちゃんの体重記録を開始しましょう</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  ダッシュボードから新しい猫を追加して、体重の記録を始めることができます。
+                </p>
+                <Link href="/dashboard">
+                  <Button>今すぐ始める</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

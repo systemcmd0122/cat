@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Target } from "lucide-react"
 
+import { useToast } from "@/hooks/use-toast"
+
 interface SetTargetDialogProps {
   open: boolean
   onClose: () => void
@@ -26,6 +28,7 @@ interface SetTargetDialogProps {
 }
 
 export function SetTargetDialog({ open, onClose, catId, currentTarget, onSuccess }: SetTargetDialogProps) {
+  const { toast } = useToast()
   const [targetWeight, setTargetWeight] = useState(currentTarget?.toString() || "")
   const [submitting, setSubmitting] = useState(false)
 
@@ -34,7 +37,11 @@ export function SetTargetDialog({ open, onClose, catId, currentTarget, onSuccess
 
     const weightValue = targetWeight.trim() ? Number.parseFloat(targetWeight) : null
     if (weightValue !== null && (isNaN(weightValue) || weightValue <= 0)) {
-      alert("正しい体重を入力してください")
+      toast({
+        title: "入力エラー",
+        description: "正しい体重を入力してください",
+        variant: "destructive",
+      })
       return
     }
 
@@ -45,11 +52,19 @@ export function SetTargetDialog({ open, onClose, catId, currentTarget, onSuccess
         targetWeight: weightValue,
       })
 
+      toast({
+        title: "目標体重を設定しました",
+        description: weightValue ? `${weightValue}kgに設定しました` : "目標体重を解除しました",
+      })
       onSuccess()
       onClose()
     } catch (error) {
       console.error("Error setting target:", error)
-      alert("目標体重の設定に失敗しました")
+      toast({
+        title: "エラーが発生しました",
+        description: "目標体重の設定に失敗しました",
+        variant: "destructive",
+      })
     } finally {
       setSubmitting(false)
     }
@@ -57,7 +72,7 @@ export function SetTargetDialog({ open, onClose, catId, currentTarget, onSuccess
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] sm:max-w-md">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

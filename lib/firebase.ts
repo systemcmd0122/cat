@@ -1,6 +1,14 @@
 import { initializeApp, getApps } from "firebase/app"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
-import { getFirestore } from "firebase/firestore"
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+} from "firebase/firestore"
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnzbv3zoYVc4opA2ELEuwRRO3EwvuWuZ8",
@@ -18,4 +26,22 @@ const auth = getAuth(app)
 const db = getFirestore(app)
 const googleProvider = new GoogleAuthProvider()
 
-export { auth, db, googleProvider }
+// Function to get user by ID
+const getUserById = async (userId: string) => {
+  const userDocRef = doc(db, "users", userId)
+  const userDoc = await getDoc(userDocRef)
+  return userDoc.exists() ? userDoc.data() : null
+}
+
+// Function to get user by email
+const getUserByEmail = async (email: string) => {
+  const usersRef = collection(db, "users")
+  const q = query(usersRef, where("email", "==", email))
+  const querySnapshot = await getDocs(q)
+  if (querySnapshot.empty) {
+    return null
+  }
+  return querySnapshot.docs[0].data()
+}
+
+export { auth, db, googleProvider, getUserById, getUserByEmail }

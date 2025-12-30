@@ -102,25 +102,27 @@ export default function SharePage() {
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Cat className="w-6 h-6 text-primary" />
-            </div>
-            <span className="text-xl font-bold">猫の体重記録</span>
-          </Link>
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center gap-2 md:gap-3">
+              <div className="p-1.5 bg-primary/10 rounded-lg">
+                <Cat className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-base sm:text-lg font-bold">猫の体重記録</span>
+            </Link>
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-8">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-primary/10 rounded-xl">
-              <Cat className="w-10 h-10 text-primary" />
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-lg sm:rounded-xl">
+              <Cat className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">{cat.name}</h1>
-              {cat.breed && <p className="text-lg text-muted-foreground mt-1">{cat.breed}</p>}
-              <p className="text-sm text-muted-foreground mt-2">この記録は共有されています（閲覧のみ）</p>
+              <h1 className="text-3xl sm:text-4xl font-bold">{cat.name}</h1>
+              {cat.breed && <p className="text-md sm:text-lg text-muted-foreground mt-1">{cat.breed}</p>}
+              <p className="text-xs sm:text-sm text-muted-foreground mt-2">この記録は共有されています（閲覧のみ）</p>
             </div>
           </div>
 
@@ -149,18 +151,21 @@ export default function SharePage() {
               ) : (
                 <div className="space-y-3">
                   {weights.map((weight) => (
-                    <div key={weight.id} className="flex justify-between items-center p-4 border rounded-lg">
+                    <div
+                      key={weight.id}
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 sm:p-4 border rounded-lg"
+                    >
                       <div>
-                        <p className="font-semibold text-lg">{weight.weight.toFixed(2)} kg</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-semibold text-md sm:text-lg">{weight.weight.toFixed(2)} kg</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {weight.date.toDate().toLocaleDateString("ja-JP", {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
                           })}
                         </p>
-                        {weight.note && <p className="text-sm text-muted-foreground mt-1">{weight.note}</p>}
                       </div>
+                      {weight.note && <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-0 sm:text-right">{weight.note}</p>}
                     </div>
                   ))}
                 </div>

@@ -118,14 +118,16 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-3 md:py-4">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base">戻る</span>
-          </Link>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-base sm:text-lg">戻る</span>
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -7,7 +7,7 @@ import { doc, getDoc, collection, query, where, orderBy, getDocs, type Timestamp
 import { db } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Cat, Plus, ArrowLeft, Share2, Trash2, Target, Sparkles } from "lucide-react"
+import { Cat, Plus, ArrowLeft, Share2, Trash2, Target, Sparkles, Users } from "lucide-react"
 import Link from "next/link"
 import { AddWeightDialog } from "@/components/add-weight-dialog"
 import { WeightChart } from "@/components/weight-chart"
@@ -208,43 +208,72 @@ export default function CatDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 md:py-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
+        <div className="container mx-auto px-3 sm:px-4 py-4">
+          <div className="flex flex-row justify-between items-center gap-2 sm:gap-3">
             <Link
               href="/dashboard"
-              className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-xs sm:text-sm md:text-base">戻る</span>
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-base sm:text-lg">戻る</span>
             </Link>
             {isOwner && (
-              <div className="flex gap-1 sm:gap-2 flex-wrap">
+              <div className="flex items-center justify-end gap-1 sm:gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleDeleteCatClick}
+                  className="sm:hidden text-destructive hover:text-destructive bg-transparent w-8 h-8"
+                  aria-label="猫を削除"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleDeleteCatClick}
-                  className="flex-1 sm:flex-none text-destructive hover:text-destructive bg-transparent text-xs sm:text-sm"
+                  className="hidden sm:inline-flex text-destructive hover:text-destructive bg-transparent text-xs"
                 >
-                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">削除</span>
+                  <Trash2 className="w-3 h-3 sm:mr-1" />
+                  <span>削除</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowCollaboratorsDialog(true)}
+                  className="sm:hidden w-8 h-8"
+                  aria-label="共同編集者"
+                >
+                  <Users className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowCollaboratorsDialog(true)}
-                  className="flex-1 sm:flex-none text-xs sm:text-sm"
+                  className="hidden sm:inline-flex text-xs"
                 >
-                  <Share2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">共同編集者</span>
+                  <Users className="w-3 h-3 sm:mr-1" />
+                  <span>共同編集者</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowShareDialog(true)}
+                  className="sm:hidden w-8 h-8"
+                  aria-label="共有"
+                >
+                  <Share2 className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowShareDialog(true)}
-                  className="flex-1 sm:flex-none text-xs sm:text-sm"
+                  className="hidden sm:inline-flex text-xs"
                 >
-                  <Share2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">共有</span>
+                  <Share2 className="w-3 h-3 sm:mr-1" />
+                  <span>共有</span>
                 </Button>
               </div>
             )}
@@ -377,7 +406,7 @@ export default function CatDetailPage() {
                 <CardDescription className="text-xs md:text-sm">過去の記録をグラフで表示</CardDescription>
               </CardHeader>
               <CardContent className="p-2 sm:p-3 md:p-6 overflow-x-auto">
-                <div className="min-w-full">
+                <div >
                   <WeightChart weights={weights} targetWeight={cat.targetWeight} />
                 </div>
               </CardContent>

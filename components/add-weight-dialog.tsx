@@ -137,17 +137,17 @@ export function AddWeightDialog({ open, onClose, catId, onSuccess }: AddWeightDi
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row">
+          <DialogFooter className="gap-2 sm:gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={submitting}
-              className="w-full sm:w-auto h-9 sm:h-10 bg-transparent text-xs sm:text-sm"
+              className="flex-1 sm:flex-initial bg-transparent text-xs sm:text-sm h-9 sm:h-10"
             >
               キャンセル
             </Button>
-            <Button type="submit" disabled={submitting} className="w-full sm:w-auto h-9 sm:h-10 text-xs sm:text-sm">
+            <Button type="submit" disabled={submitting} className="flex-1 sm:flex-initial text-xs sm:text-sm h-9 sm:h-10">
               {submitting ? "記録中..." : "記録"}
             </Button>
           </DialogFooter>

@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db, getUserById, getUserByEmail } from "@/lib/firebase"
 import {
   Dialog,
   DialogContent,
@@ -88,10 +88,54 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
     setSubmitting(true)
 
     try {
+      const input = newUserId.trim()
+      const isEmail = input.includes("@")
+
+      let userToAdd: {
+        id: string
+        email: string | null
+      } | null = null
+
+      if (isEmail) {
+        const foundUser = await getUserByEmail(input)
+        if (foundUser && foundUser.email) {
+          userToAdd = {
+            id: foundUser.id || foundUser.uid,
+            email: foundUser.email,
+          }
+        }
+      } else {
+        const foundUser = await getUserById(input)
+        if (foundUser && foundUser.email) {
+          userToAdd = {
+            id: input,
+            email: foundUser.email,
+          }
+        }
+      }
+
+      if (!userToAdd || !userToAdd.email) {
+        toast({
+          title: "ユーザーが見つかりません",
+          description: "入力されたユーザーIDまたはメールアドレスが正しくありません。",
+          variant: "destructive",
+        })
+        return
+      }
+
       const newCollaborator: Collaborator = {
-        userId: newUserId.trim(),
-        email: newUserId.trim(),
+        userId: userToAdd.id,
+        email: userToAdd.email,
         addedAt: new Date().toISOString(),
+      }
+
+      // Check if the user is already a collaborator
+      if (collaborators.some((c) => c.userId === newCollaborator.userId)) {
+        toast({
+          title: "すでに追加されています",
+          description: "このユーザーはすでに共同編集者として追加されています。",
+        })
+        return
       }
 
       await updateDoc(doc(db, "cats", catId), {
@@ -102,7 +146,7 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
       setNewUserId("")
       toast({
         title: "共同編集者を追加しました",
-        description: `${newUserId.trim()}を共同編集者として招待しました`,
+        description: `${newCollaborator.email}を共同編集者として招待しました`,
       })
     } catch (error) {
       console.error("Error adding collaborator:", error)
@@ -153,7 +197,7 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg md:text-xl">{catName}の共同編集者</DialogTitle>
             <DialogDescription className="text-xs md:text-sm">
@@ -170,11 +214,10 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     id="userId"
-                    type="email"
-                    inputMode="email"
+                    type="text"
                     value={newUserId}
                     onChange={(e) => setNewUserId(e.target.value)}
-                    placeholder="例: user@example.com"
+                    placeholder="例: user@example.com または user123"
                     className="flex-1 text-base h-11"
                   />
                   <Button type="submit" disabled={submitting || !newUserId.trim()} className="w-full sm:w-auto h-11">
@@ -222,8 +265,8 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
               )}
             </div>
 
-            <div className="bg-amber-50 dark:bg-amber-950/30 p-3 md:p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-              <p className="text-xs md:text-sm text-amber-900 dark:text-amber-100 leading-relaxed">
+            <div className="bg-amber-50 dark:bg-amber-950/30 p-3 sm:p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+              <p className="text-xs sm:text-sm text-amber-900 dark:text-amber-100 leading-relaxed">
                 <strong>注意:</strong>{" "}
                 共同編集者は体重記録を追加・削除できますが、猫の情報を変更したり削除することはできません。
               </p>
@@ -241,9 +284,9 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
       <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base md:text-lg">共同編集者を削除しますか？</AlertDialogTitle>
+            <AlertDialogTitle className="text-base md:text-lg">共同編集者を削除しますか?</AlertDialogTitle>
             <AlertDialogDescription className="text-xs md:text-sm">
-              本当にこの共同編集者を削除してもよろしいですか？
+              本当にこの共同編集者を削除してもよろしいですか?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row">
