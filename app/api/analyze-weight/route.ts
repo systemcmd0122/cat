@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "体重データがありません" }, { status: 400 })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || "AIzaSyCosQAj8MZf-T6LrVk6eMK6zs_9idL4k8M"
+    const apiKey = process.env.GEMINI_API_KEY
 
     if (!apiKey) {
       return NextResponse.json({ error: "APIキーが設定されていません" }, { status: 500 })
