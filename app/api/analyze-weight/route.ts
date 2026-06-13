@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" })
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      tools: [{ googleSearchRetrieval: {} } as any],
+    })
 
     const weightsText = weights
       .map((w: any) => `${new Date(w.date.seconds * 1000).toLocaleDateString("ja-JP")}: ${w.weight}kg`)
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
     `
 
     const prompt = `あなたは猫の健康管理の専門家です。
-以下の情報を元に、スマホでも読みやすい簡潔で視覚的な健康診断レポートを作成してください。
+Google検索を活用して、最新の猫の健康管理ガイドラインや、品種特有の注意点（特にかかりやすい病気や適正体重）を調査した上で、以下の情報を元にスマホでも読みやすい簡潔で視覚的な健康診断レポートを作成してください。
 
 # 🐈 猫の情報
 ${catInfo}

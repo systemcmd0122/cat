@@ -4,15 +4,123 @@ import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Cat, Scale, TrendingUp, Share2, AlertCircle } from "lucide-react"
+import { Cat, Scale, TrendingUp, Share2, AlertCircle, Plus, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { CatLoader } from "@/components/cat-loader"
+import { collection, query, where, getDocs, type Timestamp, orderBy, limit } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { AddCatDialog } from "@/components/add-cat-dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
+
+interface CatData {
+  id: string
+  name: string
+  breed?: string
+  birthDate?: string
+  imageUrl?: string
+  ownerId: string
+  collaborators?: { userId: string; email: string }[]
+  createdAt: Timestamp
+  lastWeight?: number
+  lastWeightDate?: Timestamp
+}
 
 export default function HomePage() {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { user, loading, signInWithGoogle, signOut } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [authError, setAuthError] = useState<string | null>(null)
+  const [cats, setCats] = useState<CatData[]>([])
+  const [loadingCats, setLoadingCats] = useState(true)
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      loadCats()
+    }
+  }, [user])
+
+  const loadCats = async () => {
+    if (!user) return
+
+    setLoadingCats(true)
+    try {
+      const catsRef = collection(db, "cats")
+
+      // Get cats where user is owner
+      const ownerQuery = query(catsRef, where("ownerId", "==", user.uid))
+      const ownerSnapshot = await getDocs(ownerQuery)
+
+      const catsData: CatData[] = []
+      ownerSnapshot.forEach((doc) => {
+        catsData.push({ id: doc.id, ...doc.data() } as CatData)
+      })
+
+      // Get cats where user is collaborator
+      const collaboratorQuery = query(catsRef, where("collaboratorIds", "array-contains", user.uid))
+      const collaboratorSnapshot = await getDocs(collaboratorQuery)
+
+      collaboratorSnapshot.forEach((doc) => {
+        if (!catsData.find((cat) => cat.id === doc.id)) {
+          catsData.push({ id: doc.id, ...doc.data() } as CatData)
+        }
+      })
+
+      // Fetch latest weight for each cat
+      const catsWithWeight = await Promise.all(
+        catsData.map(async (cat) => {
+          const weightsRef = collection(db, "weights")
+          const weightQuery = query(weightsRef, where("catId", "==", cat.id), orderBy("date", "desc"), limit(1))
+          const weightSnapshot = await getDocs(weightQuery)
+
+          if (!weightSnapshot.empty) {
+            const weightDoc = weightSnapshot.docs[0]
+            return {
+              ...cat,
+              lastWeight: weightDoc.data().weight,
+              lastWeightDate: weightDoc.data().date,
+            }
+          }
+          return cat
+        }),
+      )
+
+      setCats(catsWithWeight)
+    } catch (error) {
+      console.error("Error loading cats:", error)
+    } finally {
+      setLoadingCats(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      toast({
+        title: "ログアウトしました",
+        description: "またのご利用をお待ちしております",
+      })
+    } catch (error) {
+      console.error("Error signing out:", error)
+      toast({
+        title: "エラーが発生しました",
+        description: "ログアウトに失敗しました。もう一度お試しください。",
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleSignIn = async () => {
     try {
@@ -112,14 +220,163 @@ export default function HomePage() {
     )
   }
 
-  // Redirect to dashboard if logged in
-  useEffect(() => {
-    if (user) {
-      router.replace("/dashboard")
-    }
-  }, [user, router])
+  // Dashboard view for logged-in users
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-card sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-3 sm:px-4 py-4">
+          <div className="flex flex-row justify-between items-center gap-2 sm:gap-3">
+            <Link href="/" className="flex items-center gap-2 md:gap-3">
+              <div className="p-1.5 bg-primary/10 rounded-lg">
+                <Cat className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-base sm:text-lg font-bold">猫の体重記録</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-medium">{user.displayName}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+              <Button variant="outline" size="icon" asChild className="sm:hidden w-9 h-9">
+                <Link href="/settings" aria-label="設定">
+                  <Settings className="w-4 h-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+                <Link href="/settings">
+                  <Settings className="w-4 h-4 mr-2" />
+                  <span>設定</span>
+                </Link>
+              </Button>
 
-  if (user) {
-    return null
-  }
+              <Button variant="outline" size="icon" onClick={() => setShowLogoutDialog(true)} className="sm:hidden w-9 h-9">
+                <LogOut className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowLogoutDialog(true)} className="hidden sm:inline-flex">
+                <LogOut className="w-4 h-4 mr-2" />
+                <span>ログアウト</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="max-w-6xl mx-auto space-y-4 md:space-y-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">ダッシュボード</h1>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1">登録している猫ちゃんの一覧</p>
+            </div>
+            <Button size="lg" className="w-full sm:w-auto" onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              <span>猫を追加</span>
+            </Button>
+          </div>
+
+          {loadingCats ? (
+            <div className="flex justify-center py-12">
+              <CatLoader />
+            </div>
+          ) : cats.length === 0 ? (
+            <Card className="border-dashed border-2">
+              <CardContent className="py-12 sm:py-16 md:py-24 text-center">
+                <div className="inline-block p-4 sm:p-6 bg-primary/5 rounded-full mb-6 text-primary">
+                  <Cat className="w-12 sm:w-16 h-12 sm:h-16" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold mb-3">猫ちゃんを登録して始めましょう</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-md mx-auto">
+                  愛猫の体重を定期的に記録することで、健康状態の変化にいち早く気づくことができます。まずは最初の1匹を登録しましょう。
+                </p>
+                <Button onClick={() => setShowAddDialog(true)} size="lg" className="px-8">
+                  <Plus className="w-5 h-5 mr-2" />
+                  <span>猫を登録する</span>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              {cats.map((cat) => {
+                const daysAgo = cat.lastWeightDate
+                  ? Math.floor((Date.now() - cat.lastWeightDate.toDate().getTime()) / (1000 * 60 * 60 * 24))
+                  : null
+
+                return (
+                  <Link key={cat.id} href={`/cat/${cat.id}`}>
+                    <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full flex flex-col">
+                      <CardHeader className="p-3 sm:p-4 md:p-6 flex-1">
+                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base sm:text-lg md:text-2xl truncate">{cat.name}</CardTitle>
+                            <CardDescription className="mt-1 text-xs sm:text-sm truncate">
+                              {cat.breed || "品種：未登録"}
+                            </CardDescription>
+                          </div>
+                          <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                            <Cat className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-primary" />
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          {cat.lastWeight ? (
+                            <div className="flex items-end justify-between">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                                  最新の体重
+                                </p>
+                                <p className="text-lg sm:text-xl md:text-2xl font-bold">
+                                  {cat.lastWeight.toFixed(2)}
+                                  <span className="text-xs sm:text-sm font-normal ml-1">kg</span>
+                                </p>
+                              </div>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">
+                                {daysAgo === 0 ? "今日" : daysAgo === 1 ? "昨日" : `${daysAgo}日前`}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="py-2">
+                              <p className="text-xs text-muted-foreground italic">記録がありません</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
+                        <Button variant="outline" className="w-full bg-secondary/50 text-xs sm:text-sm md:text-base h-8 sm:h-10">
+                          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">体重記録を見る</span>
+                          <span className="sm:hidden">記録を見る</span>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AddCatDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSuccess={() => {
+          setShowAddDialog(false)
+          loadCats()
+        }}
+      />
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ログアウトしますか？</AlertDialogTitle>
+            <AlertDialogDescription>本当にログアウトしてもよろしいですか？</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>ログアウト</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
 }
