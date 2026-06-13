@@ -39,6 +39,8 @@ export default function HomePage() {
     setLoadingCats(true)
     try {
       const catsRef = collection(db, "cats")
+
+      // Get cats where user is owner
       const ownerQuery = query(catsRef, where("ownerId", "==", user.uid))
       const ownerSnapshot = await getDocs(ownerQuery)
 
@@ -47,12 +49,13 @@ export default function HomePage() {
         catsData.push({ id: doc.id, ...doc.data() } as CatData)
       })
 
-      const allCatsSnapshot = await getDocs(catsRef)
-      allCatsSnapshot.forEach((doc) => {
-        const data = doc.data() as CatData
-        const isCollaborator = data.collaborators?.some((c) => c.userId === user.uid || c.email === user.email)
-        if (isCollaborator && !catsData.find((cat) => cat.id === doc.id)) {
-          catsData.push({ id: doc.id, ...data } as CatData)
+      // Get cats where user is collaborator
+      const collaboratorQuery = query(catsRef, where("collaboratorIds", "array-contains", user.uid))
+      const collaboratorSnapshot = await getDocs(collaboratorQuery)
+
+      collaboratorSnapshot.forEach((doc) => {
+        if (!catsData.find((cat) => cat.id === doc.id)) {
+          catsData.push({ id: doc.id, ...doc.data() } as CatData)
         }
       })
 

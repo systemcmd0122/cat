@@ -52,6 +52,7 @@ export function AddCatDialog({ open, onClose, onSuccess }: AddCatDialogProps) {
         isNeutered: isNeutered === "yes",
         ownerId: user.uid,
         collaborators: [],
+        collaboratorIds: [],
         createdAt: Timestamp.now(),
       })
 
