@@ -25,18 +25,18 @@ export function WeightChart({ weights, targetWeight }: WeightChartProps) {
   }))
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="min-w-[600px] sm:min-w-0 h-[300px] sm:h-[350px]">
+    <div className="w-full">
+      <div className="w-full h-[250px] sm:h-[300px] md:h-[350px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 70 }}>
+          <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
               dataKey="date"
               className="text-[10px] sm:text-xs text-muted-foreground"
               angle={-45}
               textAnchor="end"
-              height={70}
-              interval={0}
+              height={50}
+              interval={chartData.length > 10 ? Math.floor(chartData.length / 6) : 0}
             />
             <YAxis
               className="text-[10px] sm:text-xs text-muted-foreground"

@@ -103,26 +103,25 @@ export function AIAnalysisDialog({ open, onClose, weights, catData }: AIAnalysis
 
         {analysis && (
           <div className="space-y-3 sm:space-y-4">
-            <div className="bg-muted/50 rounded-lg p-2.5 sm:p-3 md:p-4 text-xs sm:text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert prose-headings:text-base prose-headings:font-bold prose-ul:my-2 prose-li:my-0 overflow-auto">
+            <div className="bg-card border rounded-xl p-4 sm:p-6 text-sm leading-relaxed prose prose-neutral max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground overflow-auto shadow-inner">
               <ReactMarkdown
                 components={{
-                  h1: ({ node, ...props }) => <h2 className="text-sm sm:text-base md:text-lg font-bold mt-3 sm:mt-4 mb-1.5 sm:mb-2" {...props} />,
-                  h2: ({ node, ...props }) => <h3 className="text-xs sm:text-sm md:text-base font-bold mt-2.5 sm:mt-3 mb-1.5 sm:mb-2" {...props} />,
-                  h3: ({ node, ...props }) => <h4 className="text-xs font-bold mt-2 mb-1" {...props} />,
-                  ul: ({ node, ...props }) => <ul className="list-disc list-inside space-y-0.5 sm:space-y-1" {...props} />,
-                  ol: ({ node, ...props }) => <ol className="list-decimal list-inside space-y-0.5 sm:space-y-1" {...props} />,
-                  li: ({ node, ...props }) => <li className="ml-0 text-xs sm:text-sm" {...props} />,
-                  p: ({ node, ...props }) => <p className="my-1 sm:my-2 text-xs sm:text-sm" {...props} />,
-                  hr: ({ node, ...props }) => <hr className="my-2 sm:my-4" {...props} />,
-                  blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-primary pl-2 sm:pl-4 italic my-1 sm:my-2 text-xs sm:text-sm" {...props} />,
-                  code: ({ node, inline, ...props }: any) => (
-                    inline ? (
-                      <code className="bg-muted px-1 sm:px-1.5 py-0.5 rounded text-xs" {...props} />
-                    ) : (
-                      <code className="block bg-muted p-1.5 sm:p-2 rounded text-xs overflow-x-auto" {...props} />
-                    )
+                  h1: ({ node, ...props }) => <h2 className="text-lg sm:text-xl font-bold mt-6 mb-4 pb-2 border-b flex items-center gap-2" {...props} />,
+                  h2: ({ node, ...props }) => <h3 className="text-base sm:text-lg font-bold mt-5 mb-3 text-primary" {...props} />,
+                  h3: ({ node, ...props }) => <h4 className="text-sm sm:text-base font-bold mt-4 mb-2" {...props} />,
+                  ul: ({ node, ...props }) => <ul className="list-disc list-inside space-y-2 my-4" {...props} />,
+                  ol: ({ node, ...props }) => <ol className="list-decimal list-inside space-y-2 my-4" {...props} />,
+                  li: ({ node, ...props }) => <li className="text-sm sm:text-base" {...props} />,
+                  p: ({ node, ...props }) => <p className="my-3 text-sm sm:text-base leading-relaxed" {...props} />,
+                  hr: ({ node, ...props }) => <hr className="my-6 border-muted" {...props} />,
+                  blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-primary/30 pl-4 italic my-4 bg-primary/5 py-2 rounded-r-lg text-sm" {...props} />,
+                  table: ({ node, ...props }) => (
+                    <div className="overflow-x-auto my-4">
+                      <table className="min-w-full border-collapse border border-border text-sm" {...props} />
+                    </div>
                   ),
-                  pre: ({ node, ...props }) => <pre className="bg-muted p-1.5 sm:p-2 rounded overflow-x-auto text-xs" {...props} />,
+                  th: ({ node, ...props }) => <th className="border border-border bg-muted/50 p-2 text-left font-bold" {...props} />,
+                  td: ({ node, ...props }) => <td className="border border-border p-2" {...props} />,
                 }}
               >
                 {analysis}

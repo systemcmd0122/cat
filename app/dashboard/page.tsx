@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { collection, query, where, getDocs, type Timestamp } from "firebase/firestore"
+import { collection, query, where, getDocs, type Timestamp, orderBy, limit } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -32,6 +32,8 @@ interface CatData {
   ownerId: string
   collaborators?: { userId: string; email: string }[]
   createdAt: Timestamp
+  lastWeight?: number
+  lastWeightDate?: Timestamp
 }
 
 export default function DashboardPage() {
@@ -80,7 +82,28 @@ export default function DashboardPage() {
         }
       })
 
-      setCats(catsData)
+      // Fetch latest weight for each cat
+      // Note: This query requires a composite index on Firestore:
+      // collection: weights, fields: catId (Ascending), date (Descending)
+      const catsWithWeight = await Promise.all(
+        catsData.map(async (cat) => {
+          const weightsRef = collection(db, "weights")
+          const weightQuery = query(weightsRef, where("catId", "==", cat.id), orderBy("date", "desc"), limit(1))
+          const weightSnapshot = await getDocs(weightQuery)
+
+          if (!weightSnapshot.empty) {
+            const weightDoc = weightSnapshot.docs[0]
+            return {
+              ...cat,
+              lastWeight: weightDoc.data().weight,
+              lastWeightDate: weightDoc.data().date,
+            }
+          }
+          return cat
+        }),
+      )
+
+      setCats(catsWithWeight)
     } catch (error) {
       console.error("Error loading cats:", error)
     } finally {
@@ -189,32 +212,61 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              {cats.map((cat) => (
-                <Link key={cat.id} href={`/cat/${cat.id}`}>
-                  <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full">
-                    <CardHeader className="p-3 sm:p-4 md:p-6">
-                      <div className="flex items-start justify-between gap-2 sm:gap-3">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base sm:text-lg md:text-2xl truncate">{cat.name}</CardTitle>
-                          <CardDescription className="mt-1 text-xs sm:text-sm truncate">
-                            {cat.breed || "品種：未登録"}
-                          </CardDescription>
+              {cats.map((cat) => {
+                const daysAgo = cat.lastWeightDate
+                  ? Math.floor((Date.now() - cat.lastWeightDate.toDate().getTime()) / (1000 * 60 * 60 * 24))
+                  : null
+
+                return (
+                  <Link key={cat.id} href={`/cat/${cat.id}`}>
+                    <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full flex flex-col">
+                      <CardHeader className="p-3 sm:p-4 md:p-6 flex-1">
+                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base sm:text-lg md:text-2xl truncate">{cat.name}</CardTitle>
+                            <CardDescription className="mt-1 text-xs sm:text-sm truncate">
+                              {cat.breed || "品種：未登録"}
+                            </CardDescription>
+                          </div>
+                          <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                            <Cat className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-primary" />
+                          </div>
                         </div>
-                        <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg flex-shrink-0">
-                          <Cat className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-primary" />
+
+                        <div className="mt-4 space-y-2">
+                          {cat.lastWeight ? (
+                            <div className="flex items-end justify-between">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                                  最新の体重
+                                </p>
+                                <p className="text-lg sm:text-xl md:text-2xl font-bold">
+                                  {cat.lastWeight.toFixed(2)}
+                                  <span className="text-xs sm:text-sm font-normal ml-1">kg</span>
+                                </p>
+                              </div>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">
+                                {daysAgo === 0 ? "今日" : daysAgo === 1 ? "昨日" : `${daysAgo}日前`}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="py-2">
+                              <p className="text-xs text-muted-foreground italic">記録がありません</p>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
-                      <Button variant="outline" className="w-full bg-secondary/50 text-xs sm:text-sm md:text-base">
-                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">体重記録を見る</span>
-                        <span className="sm:hidden">記録を見る</span>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                      </CardHeader>
+                      <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0 md:p-6 md:pt-0">
+                        <Button variant="outline" className="w-full bg-secondary/50 text-xs sm:text-sm md:text-base h-8 sm:h-10">
+                          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">体重記録を見る</span>
+                          <span className="sm:hidden">記録を見る</span>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </div>

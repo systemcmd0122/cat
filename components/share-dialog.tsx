@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Check, Copy } from "lucide-react"
+import { Check, Copy, Share2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface ShareDialogProps {
@@ -29,6 +29,11 @@ export function ShareDialog({ open, onClose, catId, catName }: ShareDialogProps)
   const [shareToken, setShareToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [canShare, setCanShare] = useState(false)
+
+  useEffect(() => {
+    setCanShare(!!navigator.share)
+  }, [])
 
   useEffect(() => {
     if (open) {
@@ -93,6 +98,27 @@ export function ShareDialog({ open, onClose, catId, catName }: ShareDialogProps)
     }
   }
 
+  const handleShare = async () => {
+    const shareData = {
+      title: `${catName}の体重記録`,
+      text: `${catName}の体重記録をチェックしてね！`,
+      url: getShareUrl(),
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Error sharing:", error)
+          handleCopy()
+        }
+      }
+    } else {
+      handleCopy()
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] sm:max-w-lg">
@@ -110,11 +136,19 @@ export function ShareDialog({ open, onClose, catId, catName }: ShareDialogProps)
             <>
               <div className="space-y-2">
                 <Label>共有URL</Label>
-                <div className="flex gap-2">
-                  <Input value={getShareUrl()} readOnly className="flex-1" />
-                  <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0 bg-transparent">
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex gap-2 flex-1">
+                    <Input value={getShareUrl()} readOnly className="flex-1" />
+                    <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0 bg-transparent">
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                  {canShare && (
+                    <Button type="button" onClick={handleShare} className="w-full sm:w-auto">
+                      <Share2 className="w-4 h-4 mr-2" />
+                      共有する
+                    </Button>
+                  )}
                 </div>
               </div>
 
