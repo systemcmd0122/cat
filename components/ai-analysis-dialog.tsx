@@ -30,11 +30,12 @@ export function AIAnalysisDialog({ open, onClose, weights, catData }: AIAnalysis
         body: JSON.stringify({ weights, catData }),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error("分析に失敗しました")
+        throw new Error(data.error || "分析に失敗しました")
       }
 
-      const data = await response.json()
       setAnalysis(data.analysis)
     } catch (error) {
       console.error("Error analyzing:", error)
