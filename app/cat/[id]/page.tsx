@@ -85,7 +85,7 @@ export default function CatDetailPage() {
           description: "猫が見つかりませんでした",
           variant: "destructive",
         })
-        router.push("/dashboard")
+        router.push("/")
         return
       }
 
@@ -173,7 +173,7 @@ export default function CatDetailPage() {
         title: "削除しました",
         description: "猫のデータを削除しました",
       })
-      router.push("/dashboard")
+      router.push("/")
     } catch (error) {
       console.error("Error deleting cat:", error)
       toast({
@@ -211,7 +211,7 @@ export default function CatDetailPage() {
         <div className="container mx-auto px-3 sm:px-4 py-4">
           <div className="flex flex-row justify-between items-center gap-2 sm:gap-3">
             <Link
-              href="/dashboard"
+              href="/"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />

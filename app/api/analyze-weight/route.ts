@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      tools: [{ googleSearchRetrieval: {} } as any],
+    })
 
     const weightsText = weights
       .map((w: any) => `${new Date(w.date.seconds * 1000).toLocaleDateString("ja-JP")}: ${w.weight}kg`)
@@ -27,47 +30,29 @@ export async function POST(req: NextRequest) {
 品種: ${catData.breed || "不明"}
 性別: ${catData.gender === "male" ? "オス" : catData.gender === "female" ? "メス" : "不明"}
 年齢: ${catData.birthDate ? `${new Date().getFullYear() - new Date(catData.birthDate).getFullYear()}歳` : "不明"}
-避妊去勢: ${catData.isNeutered ? "済" : catData.isNeutered === false ? "未" : "不明"}
+避妊去勢: ${catData.isNeutered ? "済" : "未"}
 目標体重: ${catData.targetWeight ? `${catData.targetWeight}kg` : "未設定"}
     `
 
-    const prompt = `あなたは猫の健康管理の専門家です。以下の猫の情報と体重データを分析し、健康状態と推奨事項を提供してください。
+    const prompt = `あなたは猫の健康管理の専門家です。
+Google検索を活用して、最新の猫の健康管理ガイドラインや、品種特有の注意点（特にかかりやすい病気や適正体重）を調査した上で、以下の情報を元にスマホでも読みやすい簡潔で視覚的な健康診断レポートを作成してください。
 
+# 猫の情報
 ${catInfo}
 
-体重記録:
+# 体重記録
 ${weightsText}
 
-# 猫の健康に関する基礎知識
+# 依頼内容
+以下の4つのセクションで構成してください。絵文字は一切使用しないでください。
+Markdown形式で出力し、表や箇条書きを活用して視覚的に分かりやすくしてください。
 
-## 平均体重
-- 大型猫種を除くと、オスでは4～5kg、メスでは3～4kgが平均的
-- 小型猫は2～3.5kg、大型猫は4.5~9kg
+1. **現在の状態評価** (適正体重との比較、最近の傾向)
+2. **体形チェックのポイント** (飼い主が自宅で確認すべき点)
+3. **具体的なアドバイス** (食事量、運動、生活環境など)
+4. **専門家からのメッセージ** (励ましや注意点)
 
-## 体重の計り方
-- 猫を抱っこしながら体重計に乗り、その後飼い主だけの体重を測って差し引く
-
-## 体形チェックポイント
-- お腹に脂肪がたまっていないか
-- ウエストにくびれがあるか
-- 背骨を感じられるか
-- 肋骨を感じるか
-
-## 太りやすい猫
-- 去勢、避妊手術をした後は、体内の代謝が変わり太りやすくなる
-- 中高齢を迎えると1日に必要なエネルギーが若いころと比べて低下するので、同じ量のご飯だと太ることも
-
-# 分析項目
-
-以下の観点から分析してください：
-1. 体重の傾向（増加、減少、安定など）
-2. 猫種、性別、年齢、避妊去勢状況を考慮した適正体重との比較
-3. 体形チェックポイントに基づく評価
-4. 避妊去勢後や中高齢猫の特性を考慮したアドバイス
-5. 具体的な健康アドバイス（食事管理、運動など）
-6. 目標体重が設定されている場合、その達成に向けた具体的なステップ
-
-簡潔で分かりやすく、実用的なアドバイスを日本語でお願いします。`
+※ 回答は長くなりすぎないよう、要点を絞って簡潔に(スマホ1画面に収まる程度が理想)まとめてください。`
 
     const result = await model.generateContent(prompt)
     const response = result.response
