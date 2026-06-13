@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-1.5-flash",
       tools: [{ googleSearchRetrieval: {} } as any],
     })
 
@@ -61,6 +61,9 @@ Markdown形式で出力し、表や箇条書きを活用して視覚的に分か
     return NextResponse.json({ analysis })
   } catch (error) {
     console.error("Error analyzing weight:", error)
-    return NextResponse.json({ error: "分析に失敗しました" }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "分析に失敗しました" },
+      { status: 500 },
+    )
   }
 }
