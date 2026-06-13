@@ -321,8 +321,8 @@ export default function CatDetailPage() {
             </div>
             {canEdit && (
               <Button
-                size="sm"
-                className="md:size-lg w-full sm:w-auto flex-shrink-0 text-xs sm:text-sm"
+                size="lg"
+                className="w-full sm:w-auto flex-shrink-0"
                 onClick={() => setShowAddDialog(true)}
               >
                 <Plus className="w-3 sm:w-4 h-3 sm:h-4 md:w-5 md:h-5 mr-1 sm:mr-2" />

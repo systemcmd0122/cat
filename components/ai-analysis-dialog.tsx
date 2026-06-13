@@ -78,8 +78,17 @@ export function AIAnalysisDialog({ open, onClose, weights, catData }: AIAnalysis
             <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-4 sm:mb-6 px-2 sm:px-4">
               AIが体重データを分析し、健康状態と推奨事項を提供します
             </p>
-            <Button onClick={handleAnalyze} size="lg" className="h-10 sm:h-11 md:h-12 text-xs sm:text-sm md:text-base">
-              <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2" />
+            <Button
+              onClick={handleAnalyze}
+              size="lg"
+              className="h-10 sm:h-11 md:h-12 text-xs sm:text-sm md:text-base"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2" />
+              )}
               分析を開始
             </Button>
           </div>

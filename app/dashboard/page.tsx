@@ -60,6 +60,8 @@ export default function DashboardPage() {
 
     try {
       const catsRef = collection(db, "cats")
+
+      // Get cats where user is owner
       const ownerQuery = query(catsRef, where("ownerId", "==", user.uid))
       const ownerSnapshot = await getDocs(ownerQuery)
 
@@ -68,12 +70,13 @@ export default function DashboardPage() {
         catsData.push({ id: doc.id, ...doc.data() } as CatData)
       })
 
-      const allCatsSnapshot = await getDocs(catsRef)
-      allCatsSnapshot.forEach((doc) => {
-        const data = doc.data() as CatData
-        const isCollaborator = data.collaborators?.some((c) => c.userId === user.uid || c.email === user.email)
-        if (isCollaborator && !catsData.find((cat) => cat.id === doc.id)) {
-            catsData.push({ ...doc.data(), id: doc.id } as CatData)
+      // Get cats where user is collaborator
+      const collaboratorQuery = query(catsRef, where("collaboratorIds", "array-contains", user.uid))
+      const collaboratorSnapshot = await getDocs(collaboratorQuery)
+
+      collaboratorSnapshot.forEach((doc) => {
+        if (!catsData.find((cat) => cat.id === doc.id)) {
+          catsData.push({ id: doc.id, ...doc.data() } as CatData)
         }
       })
 
@@ -169,18 +172,18 @@ export default function DashboardPage() {
               <CatLoader />
             </div>
           ) : cats.length === 0 ? (
-            <Card>
-              <CardContent className="py-6 sm:py-8 md:py-12 text-center">
-                <div className="inline-block p-2 sm:p-3 md:p-4 bg-muted rounded-full mb-3 sm:mb-4">
-                  <Cat className="w-8 sm:w-10 h-8 sm:h-10 md:w-12 md:h-12 text-muted-foreground" />
+            <Card className="border-dashed border-2">
+              <CardContent className="py-12 sm:py-16 md:py-24 text-center">
+                <div className="inline-block p-4 sm:p-6 bg-primary/5 rounded-full mb-6 text-primary">
+                  <Cat className="w-12 sm:w-16 h-12 sm:h-16" />
                 </div>
-                <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-2">猫を追加しましょう</h3>
-                <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-4 sm:mb-6">
-                  まだ猫が登録されていません。最初の猫を追加して記録を始めましょう
+                <h3 className="text-xl sm:text-2xl font-bold mb-3">猫ちゃんを登録して始めましょう</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-8 max-w-md mx-auto">
+                  愛猫の体重を定期的に記録することで、健康状態の変化にいち早く気づくことができます。まずは最初の1匹を登録しましょう。
                 </p>
-                <Button onClick={() => setShowAddDialog(true)} className="w-full sm:w-auto">
-                  <Plus className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="text-xs sm:text-sm">最初の猫を追加</span>
+                <Button onClick={() => setShowAddDialog(true)} size="lg" className="px-8">
+                  <Plus className="w-5 h-5 mr-2" />
+                  <span>猫を登録する</span>
                 </Button>
               </CardContent>
             </Card>

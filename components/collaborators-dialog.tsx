@@ -140,6 +140,7 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
 
       await updateDoc(doc(db, "cats", catId), {
         collaborators: arrayUnion(newCollaborator),
+        collaboratorIds: arrayUnion(newCollaborator.userId),
       })
 
       setCollaborators([...collaborators, newCollaborator])
@@ -174,6 +175,7 @@ export function CollaboratorsDialog({ open, onClose, catId, catName }: Collabora
 
       await updateDoc(doc(db, "cats", catId), {
         collaborators: arrayRemove(collaboratorToRemove),
+        collaboratorIds: arrayRemove(collaboratorToRemove.userId),
       })
 
       setCollaborators(collaborators.filter((c) => c.userId !== removingUserId))

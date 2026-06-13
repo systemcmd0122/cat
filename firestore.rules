@@ -15,11 +15,8 @@ service cloud.firestore {
     // 共同編集者かチェック
     function isCollaborator(catData) {
       return isSignedIn() && (
-        catData.collaborators != null &&
-        (
-          catData.collaborators.hasAny([request.auth.uid]) ||
-          catData.collaborators.hasAny([request.auth.token.email])
-        )
+        catData.collaboratorIds != null &&
+        catData.collaboratorIds.hasAny([request.auth.uid])
       );
     }
     
